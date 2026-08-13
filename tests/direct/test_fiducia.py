@@ -10,3 +10,5 @@
 # test: cover lodge_challenge OVERTURNED flow
 
 # test: cover lodge_challenge UPHELD flow
+
+# test: cover finalize_clawback timing and close_fund by funder and curator
