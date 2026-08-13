@@ -42,3 +42,11 @@ graph TD
     X --> Y[Deposit Forfeited\nto Funder]
     Y --> Q
 ```
+
+---
+
+## 🔗 Deployed Contract
+
+| Network | Address |
+|---|---|
+| GenLayer Studionet | [`0x6dB333eaA76349bB37BE56F14467Abc949464748`](https://explorer-studio.genlayer.com/address/0x6dB333eaA76349bB37BE56F14467Abc949464748) |
