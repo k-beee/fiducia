@@ -33,3 +33,36 @@ PANEL CONDUCT RULES:
 - When the fetched evidence contradicts the narrative, weight the fetched content more heavily.
 - A polished narrative with thin or missing evidence is ABSENT/MARGINAL proof, not COMPELLING.
 """
+
+@gl.evm.contract_interface
+class _Recipient:
+    class View:
+        pass
+    class Write:
+        pass
+
+class Fiducia(gl.Contract):
+    funds:      TreeMap[str, str]
+    dispatches: TreeMap[str, str]
+    funds_by_funder:  TreeMap[str, str]
+    funds_by_grantee: TreeMap[str, str]
+    fund_counter:     u256
+    dispatch_counter: u256
+    total_locked_wei:    u256
+    total_released_wei:  u256
+    total_reclaimed_wei: u256
+    live_fund_count:     u256
+    cycle_count: u256
+
+    def __init__(self):
+        self.funds         = TreeMap()
+        self.dispatches    = TreeMap()
+        self.funds_by_funder  = TreeMap()
+        self.funds_by_grantee = TreeMap()
+        self.fund_counter     = u256(0)
+        self.dispatch_counter = u256(0)
+        self.total_locked_wei    = u256(0)
+        self.total_released_wei  = u256(0)
+        self.total_reclaimed_wei = u256(0)
+        self.live_fund_count     = u256(0)
+        self.cycle_count         = u256(0)
