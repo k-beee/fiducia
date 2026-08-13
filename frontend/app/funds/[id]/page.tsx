@@ -1,0 +1,1 @@
+export default function FundDetail() { return <div>Detail</div>; }
