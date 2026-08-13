@@ -98,3 +98,63 @@ class Fiducia(gl.Contract):
 
     def _save_dispatch(self, dispatch: dict) -> None:
         self.dispatches[dispatch["dispatch_id"]] = json.dumps(dispatch)
+
+    @gl.public.write.payable
+    def award_fund(
+        self,
+        grantee: str,
+        title: str,
+        milestones: list,
+        acceptance_criteria: str,
+        curator: str = "",
+    ) -> str:
+        self._tick()
+        funder = str(gl.message.sender_address)
+        amount = int(gl.message.value)
+
+        if amount < MIN_FUND_WEI:
+            raise gl.vm.UserError("Fund amount too small — minimum is 0.1 GEN")
+        if amount > MAX_FUND_WEI:
+            raise gl.vm.UserError("Fund amount too large — maximum is 10 GEN")
+        if len(milestones) < MIN_MILESTONES:
+            raise gl.vm.UserError(f"Minimum {MIN_MILESTONES} milestones required")
+        if len(milestones) > MAX_MILESTONES:
+            raise gl.vm.UserError(f"Maximum {MAX_MILESTONES} milestones allowed")
+        if not title.strip():
+            raise gl.vm.UserError("Fund title cannot be empty")
+        if funder.lower() == grantee.lower():
+            raise gl.vm.UserError("Funder and grantee must be different addresses")
+
+        n = len(milestones)
+        base = amount // n
+        disbursements = [base] * n
+        disbursements[-1] += amount - (base * n)
+
+        fund_id = str(int(self.fund_counter) + 1)
+        self.fund_counter = u256(int(self.fund_counter) + 1)
+
+        fund = {
+            "fund_id":             fund_id,
+            "funder":              funder,
+            "grantee":             grantee,
+            "curator":             curator.strip() if curator else "",
+            "title":               title.strip(),
+            "milestones":          milestones,
+            "acceptance_criteria": acceptance_criteria.strip(),
+            "disbursements":       disbursements,
+            "total_amount":        amount,
+            "status":              "ACTIVE",
+            "current_milestone":   0,
+            "dispatch_ids":        [],
+            "failed_streak":       0,
+            "clawback_trigger_cycle": None,
+            "released_wei":        0,
+        }
+        self._save_fund(fund)
+        self._index_append(self.funds_by_funder, funder, fund_id)
+        self._index_append(self.funds_by_grantee, grantee, fund_id)
+
+        self.total_locked_wei = u256(int(self.total_locked_wei) + amount)
+        self.live_fund_count  = u256(int(self.live_fund_count) + 1)
+
+        return fund_id
