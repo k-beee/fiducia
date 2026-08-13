@@ -243,3 +243,78 @@ class Fiducia(gl.Contract):
             ruling["overall"] = "FAILED"
 
         return ruling
+
+    @gl.public.write
+    def submit_dispatch(
+        self,
+        fund_id: str,
+        narrative: str,
+        evidence_urls: list,
+    ) -> str:
+        self._tick()
+        caller = str(gl.message.sender_address)
+        fund = self._load_fund(fund_id)
+
+        if fund["status"] != "ACTIVE":
+            raise gl.vm.UserError(f"Fund {fund_id} is not ACTIVE (status: {fund['status']})")
+        if caller.lower() != fund["grantee"].lower():
+            raise gl.vm.UserError("Only the grantee may submit a dispatch")
+        if fund["current_milestone"] >= len(fund["milestones"]):
+            raise gl.vm.UserError("All milestones already completed")
+        if not narrative.strip():
+            raise gl.vm.UserError("Dispatch narrative cannot be empty")
+        if not evidence_urls:
+            raise gl.vm.UserError("At least one evidence URL is required")
+
+        milestone_idx  = fund["current_milestone"]
+        milestone_text = fund["milestones"][milestone_idx]
+        disbursement   = fund["disbursements"][milestone_idx]
+
+        dispatch_id = str(int(self.dispatch_counter) + 1)
+        self.dispatch_counter = u256(int(self.dispatch_counter) + 1)
+
+        ruling = self._run_panel(
+            fund=fund, milestone_index=milestone_idx,
+            milestone_text=milestone_text, narrative=narrative, urls=evidence_urls,
+        )
+
+        disbursement_released = 0
+        if ruling["overall"] == "PASSED":
+            payee = gl.get_contract_at(_Recipient, fund["grantee"])
+            payee.emit_transfer(disbursement, on="finalized")
+            disbursement_released = disbursement
+
+            fund["current_milestone"] += 1
+            fund["failed_streak"]       = 0
+            fund["released_wei"]        = fund.get("released_wei", 0) + disbursement
+            self.total_released_wei = u256(int(self.total_released_wei) + disbursement)
+
+            if fund["current_milestone"] >= len(fund["milestones"]):
+                fund["status"] = "COMPLETED"
+                self.live_fund_count = u256(int(self.live_fund_count) - 1)
+        else:
+            fund["failed_streak"] = fund.get("failed_streak", 0) + 1
+            if fund["failed_streak"] >= FAILED_STREAK_LIMIT:
+                fund["status"] = "CLAWBACK_PENDING"
+                fund["clawback_trigger_cycle"] = int(self.cycle_count)
+
+        dispatch = {
+            "dispatch_id":               dispatch_id,
+            "fund_id":                   fund_id,
+            "grantee":                   fund["grantee"],
+            "milestone_index":           milestone_idx,
+            "milestone_text":            milestone_text,
+            "narrative":                 narrative,
+            "evidence_urls":             evidence_urls,
+            "ruling":                    ruling,
+            "overall":                   ruling["overall"],
+            "disbursement_released_wei": disbursement_released,
+            "challenged":                False,
+            "challenge_outcome":         None,
+            "challenge_ruling":          None,
+        }
+        self._save_dispatch(dispatch)
+        fund["dispatch_ids"].append(dispatch_id)
+        self._save_fund(fund)
+
+        return dispatch_id
