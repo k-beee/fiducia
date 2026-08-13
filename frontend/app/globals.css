@@ -1,6 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
 :root {
   --bg: #0B1426;
   --surface: #1A2332;
@@ -11,4 +12,9 @@
   --muted: #8B9BB4;
   --hairline: rgba(139, 155, 180, 0.15);
 }
-body { background: var(--bg); color: var(--parchment); font-family: var(--font-dm-sans), system-ui, sans-serif; }
+
+body {
+  background-color: var(--bg);
+  color: var(--parchment);
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+}
