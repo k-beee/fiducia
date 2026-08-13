@@ -394,3 +394,51 @@ class Fiducia(gl.Contract):
         self._save_fund(fund)
 
         return challenge_outcome
+
+    @gl.public.write
+    def finalize_clawback(self, fund_id: str) -> None:
+        self._tick()
+        fund = self._load_fund(fund_id)
+
+        if fund["status"] != "CLAWBACK_PENDING":
+            raise gl.vm.UserError(f"Fund {fund_id} is not in CLAWBACK_PENDING")
+
+        trigger = fund.get("clawback_trigger_cycle", 0)
+        elapsed = int(self.cycle_count) - trigger
+        if elapsed < CLAWBACK_WINDOW_ACTIONS:
+            remaining_window = CLAWBACK_WINDOW_ACTIONS - elapsed
+            raise gl.vm.UserError(f"Challenge window still open — {remaining_window} action(s) remaining")
+
+        remaining = fund["total_amount"] - fund.get("released_wei", 0)
+        if remaining > 0:
+            funder_payee = gl.get_contract_at(_Recipient, fund["funder"])
+            funder_payee.emit_transfer(remaining, on="finalized")
+            self.total_reclaimed_wei = u256(int(self.total_reclaimed_wei) + remaining)
+
+        fund["status"] = "CLAWED_BACK"
+        self.live_fund_count = u256(int(self.live_fund_count) - 1)
+        self._save_fund(fund)
+
+    @gl.public.write
+    def close_fund(self, fund_id: str) -> None:
+        self._tick()
+        caller = str(gl.message.sender_address)
+        fund = self._load_fund(fund_id)
+
+        is_funder  = caller.lower() == fund["funder"].lower()
+        is_curator = bool(fund.get("curator")) and caller.lower() == fund["curator"].lower()
+
+        if not (is_funder or is_curator):
+            raise gl.vm.UserError("Only the funder or appointed curator may close a fund")
+        if fund["status"] not in ("ACTIVE", "CLAWBACK_PENDING"):
+            raise gl.vm.UserError(f"Fund cannot be closed in status: {fund['status']}")
+
+        remaining = fund["total_amount"] - fund.get("released_wei", 0)
+        if remaining > 0:
+            funder_payee = gl.get_contract_at(_Recipient, fund["funder"])
+            funder_payee.emit_transfer(remaining, on="finalized")
+            self.total_reclaimed_wei = u256(int(self.total_reclaimed_wei) + remaining)
+
+        fund["status"] = "CLOSED"
+        self.live_fund_count = u256(int(self.live_fund_count) - 1)
+        self._save_fund(fund)
