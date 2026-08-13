@@ -1,0 +1,1 @@
+export default function SubmitDispatch() { return <div>Submit</div>; }
