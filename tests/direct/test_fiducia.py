@@ -6,3 +6,5 @@
 # test: cover submit_dispatch PASSED verdict and disbursement release
 
 # test: cover FAILED streak and CLAWBACK_PENDING state transition
+
+# test: cover lodge_challenge OVERTURNED flow
