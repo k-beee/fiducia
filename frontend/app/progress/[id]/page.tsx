@@ -1,0 +1,1 @@
+export default function DispatchDetail() { return <div>Detail</div>; }
