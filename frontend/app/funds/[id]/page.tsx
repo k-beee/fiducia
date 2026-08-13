@@ -1,8 +1,8 @@
 "use client";
 import React, { use } from "react";
 import Link from "next/link";
-import { useFund, useSubmitDispatch, useFinalizeClawback, useCloseFund } from "../../../lib/hooks/useFiducia";
-import { useWallet } from "../../../lib/genlayer/wallet";
+import { useFund, useSubmitDispatch, useFinalizeClawback, useCloseFund } from "@/lib/hooks/useFiducia";
+import { useWallet } from "@/lib/genlayer/wallet";
 import { Layers, Landmark, Calendar, User, Clock, ArrowRight, ShieldAlert, Award } from "lucide-react";
 import { toast, Toaster } from "sonner";
 

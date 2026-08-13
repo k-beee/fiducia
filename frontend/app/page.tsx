@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useProtocolStats } from "../lib/hooks/useFiducia";
+import { useProtocolStats } from "@/lib/hooks/useFiducia";
 import { Landmark, ShieldAlert, Award, FileSpreadsheet } from "lucide-react";
 
 export default function Home() {

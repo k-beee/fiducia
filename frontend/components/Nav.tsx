@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useWallet } from "../lib/genlayer/wallet";
+import { useWallet } from "@/lib/genlayer/wallet";
 import { KeyRound, LogOut, Landmark } from "lucide-react";
 
 export function Nav() {

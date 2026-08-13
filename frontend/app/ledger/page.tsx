@@ -1,9 +1,9 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { FiduciaClient } from "../../lib/contracts/fiducia";
+import { FiduciaClient } from "@/lib/contracts/fiducia";
 import { Landmark, ArrowRight, ShieldCheck, ShieldAlert } from "lucide-react";
-import type { Dispatch } from "../../lib/contracts/types";
+import type { Dispatch } from "@/lib/contracts/types";
 
 export default function Ledger() {
   const [dispatches, setDispatches] = useState<Dispatch[]>([]);

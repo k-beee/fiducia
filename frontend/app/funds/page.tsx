@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
-import { useFundsList } from "../../lib/hooks/useFiducia";
-import { useWallet } from "../../lib/genlayer/wallet";
+import { useFundsList } from "@/lib/hooks/useFiducia";
+import { useWallet } from "@/lib/genlayer/wallet";
 import { Landmark, ArrowRight, Layers } from "lucide-react";
 import { useState } from "react";
 

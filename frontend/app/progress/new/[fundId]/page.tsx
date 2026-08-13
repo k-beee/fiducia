@@ -43,7 +43,7 @@ export default function SubmitDispatch({ params }: { params: Promise<{ fundId: s
 
   const submit = async () => {
     if (!isConnected) return toast.error("Please connect your wallet first.");
-    if (!narrative.strip()) return toast.error("Narrative description cannot be empty.");
+    if (!narrative.trim()) return toast.error("Narrative description cannot be empty.");
 
     const filledUrls = urls.map(u => u.trim()).filter(Boolean);
     if (filledUrls.length === 0) return toast.error("At least one evidence URL is required.");

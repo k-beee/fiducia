@@ -1,8 +1,8 @@
 "use client";
 import React, { use, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useDispatch, useLodgeChallenge, useFund } from "../../../lib/hooks/useFiducia";
-import { useWallet } from "../../../lib/genlayer/wallet";
+import { useDispatch, useLodgeChallenge, useFund } from "@/lib/hooks/useFiducia";
+import { useWallet } from "@/lib/genlayer/wallet";
 import { ArrowLeft, Landmark, ShieldCheck, ShieldAlert, Award, HelpCircle, ExternalLink } from "lucide-react";
 import { toast, Toaster } from "sonner";
 
@@ -30,7 +30,7 @@ export default function DispatchDetail({ params }: { params: Promise<{ id: strin
 
   const handleChallenge = async () => {
     if (!isConnected) return toast.error("Please connect your wallet first.");
-    if (!note.strip()) return toast.error("Please add a note outlining your challenge advocacy.");
+    if (!note.trim()) return toast.error("Please add a note outlining your challenge advocacy.");
 
     if (!fund) return toast.error("Fund details not loaded.");
 

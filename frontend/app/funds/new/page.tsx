@@ -1,8 +1,8 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAwardFund } from "../../lib/hooks/useFiducia";
-import { useWallet } from "../../lib/genlayer/wallet";
+import { useAwardFund } from "@/lib/hooks/useFiducia";
+import { useWallet } from "@/lib/genlayer/wallet";
 import { Landmark, Plus, Trash2, HelpCircle } from "lucide-react";
 import { toast, Toaster } from "sonner";
 
