@@ -1,0 +1,1 @@
+export default function NewFund() { return <div>New</div>; }
