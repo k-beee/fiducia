@@ -66,3 +66,35 @@ class Fiducia(gl.Contract):
         self.total_reclaimed_wei = u256(0)
         self.live_fund_count     = u256(0)
         self.cycle_count         = u256(0)
+
+    def _tick(self) -> int:
+        self.cycle_count = u256(int(self.cycle_count) + 1)
+        return int(self.cycle_count)
+
+    def _index_append(self, index: TreeMap[str, str], key: str, value: str) -> None:
+        existing = index.get(key)
+        arr = json.loads(existing) if existing else []
+        arr.append(value)
+        index[key] = json.dumps(arr)
+
+    def _index_load(self, index: TreeMap[str, str], key: str) -> list:
+        existing = index.get(key)
+        return json.loads(existing) if existing else []
+
+    def _load_fund(self, fund_id: str) -> dict:
+        raw = self.funds.get(fund_id)
+        if raw is None:
+            raise gl.vm.UserError(f"Fund {fund_id} not found")
+        return json.loads(raw)
+
+    def _save_fund(self, fund: dict) -> None:
+        self.funds[fund["fund_id"]] = json.dumps(fund)
+
+    def _load_dispatch(self, dispatch_id: str) -> dict:
+        raw = self.dispatches.get(dispatch_id)
+        if raw is None:
+            raise gl.vm.UserError(f"Dispatch {dispatch_id} not found")
+        return json.loads(raw)
+
+    def _save_dispatch(self, dispatch: dict) -> None:
+        self.dispatches[dispatch["dispatch_id"]] = json.dumps(dispatch)
