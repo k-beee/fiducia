@@ -1,0 +1,1 @@
+export function Nav() { return <nav className="sticky top-0 z-50 p-4">Nav</nav>; }
