@@ -318,3 +318,79 @@ class Fiducia(gl.Contract):
         self._save_fund(fund)
 
         return dispatch_id
+
+    @gl.public.write.payable
+    def lodge_challenge(
+        self,
+        dispatch_id: str,
+        challenge_note: str,
+    ) -> str:
+        self._tick()
+        caller   = str(gl.message.sender_address)
+        deposit  = int(gl.message.value)
+        dispatch = self._load_dispatch(dispatch_id)
+        fund     = self._load_fund(dispatch["fund_id"])
+
+        if caller.lower() != fund["grantee"].lower():
+            raise gl.vm.UserError("Only the grantee may lodge a challenge")
+        if dispatch["overall"] != "FAILED":
+            raise gl.vm.UserError("Only a FAILED dispatch can be challenged")
+        if dispatch["challenged"]:
+            raise gl.vm.UserError("This dispatch has already been challenged")
+        if fund["status"] not in ("ACTIVE", "CLAWBACK_PENDING"):
+            raise gl.vm.UserError(f"Cannot challenge in fund status: {fund['status']}")
+
+        milestone_idx = dispatch["milestone_index"]
+        disbursement  = fund["disbursements"][milestone_idx]
+
+        required_deposit = max(
+            (disbursement * CHALLENGE_DEPOSIT_BPS) // 10_000,
+            MIN_CHALLENGE_DEPOSIT_WEI,
+        )
+        if deposit < required_deposit:
+            raise gl.vm.UserError(f"Challenge deposit too low — minimum {required_deposit} wei required")
+
+        challenge_ctx = {
+            "original_ruling": dispatch["ruling"],
+            "note":            challenge_note,
+        }
+        second_ruling = self._run_panel(
+            fund=fund, milestone_index=milestone_idx,
+            milestone_text=fund["milestones"][milestone_idx],
+            narrative=dispatch["narrative"], urls=dispatch["evidence_urls"],
+            challenge_ctx=challenge_ctx,
+        )
+
+        disbursement_released = 0
+        if second_ruling["overall"] == "PASSED":
+            payee = gl.get_contract_at(_Recipient, fund["grantee"])
+            payee.emit_transfer(disbursement + deposit, on="finalized")
+            disbursement_released = disbursement
+
+            fund["current_milestone"] += 1
+            fund["failed_streak"]       = 0
+            fund["released_wei"]        = fund.get("released_wei", 0) + disbursement
+            self.total_released_wei = u256(int(self.total_released_wei) + disbursement)
+
+            if fund["status"] == "CLAWBACK_PENDING":
+                fund["status"] = "ACTIVE"
+                fund["clawback_trigger_cycle"] = None
+
+            if fund["current_milestone"] >= len(fund["milestones"]):
+                fund["status"] = "COMPLETED"
+                self.live_fund_count = u256(int(self.live_fund_count) - 1)
+
+            challenge_outcome = "OVERTURNED"
+        else:
+            funder_payee = gl.get_contract_at(_Recipient, fund["funder"])
+            funder_payee.emit_transfer(deposit, on="finalized")
+            challenge_outcome = "UPHELD"
+
+        dispatch["challenged"]                = True
+        dispatch["challenge_outcome"]         = challenge_outcome
+        dispatch["challenge_ruling"]          = second_ruling
+        dispatch["disbursement_released_wei"] = disbursement_released
+        self._save_dispatch(dispatch)
+        self._save_fund(fund)
+
+        return challenge_outcome
