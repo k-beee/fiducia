@@ -8,3 +8,5 @@
 # test: cover FAILED streak and CLAWBACK_PENDING state transition
 
 # test: cover lodge_challenge OVERTURNED flow
+
+# test: cover lodge_challenge UPHELD flow
