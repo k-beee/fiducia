@@ -442,3 +442,44 @@ class Fiducia(gl.Contract):
         fund["status"] = "CLOSED"
         self.live_fund_count = u256(int(self.live_fund_count) - 1)
         self._save_fund(fund)
+
+    @gl.public.view
+    def get_fund(self, fund_id: str) -> str:
+        raw = self.funds.get(fund_id)
+        if raw is None:
+            raise gl.vm.UserError(f"Fund {fund_id} not found")
+        return raw
+
+    @gl.public.view
+    def get_dispatch(self, dispatch_id: str) -> str:
+        raw = self.dispatches.get(dispatch_id)
+        if raw is None:
+            raise gl.vm.UserError(f"Dispatch {dispatch_id} not found")
+        return raw
+
+    @gl.public.view
+    def get_funds_by_funder(self, funder: str) -> str:
+        return json.dumps(self._index_load(self.funds_by_funder, funder))
+
+    @gl.public.view
+    def get_funds_by_grantee(self, grantee: str) -> str:
+        return json.dumps(self._index_load(self.funds_by_grantee, grantee))
+
+    @gl.public.view
+    def get_protocol_stats(self) -> str:
+        return json.dumps({
+            "fund_count":          int(self.fund_counter),
+            "dispatch_count":      int(self.dispatch_counter),
+            "live_fund_count":     int(self.live_fund_count),
+            "total_locked_wei":    str(int(self.total_locked_wei)),
+            "total_released_wei":  str(int(self.total_released_wei)),
+            "total_reclaimed_wei": str(int(self.total_reclaimed_wei)),
+        })
+
+    @gl.public.view
+    def get_fund_count(self) -> int:
+        return int(self.fund_counter)
+
+    @gl.public.view
+    def get_dispatch_count(self) -> int:
+        return int(self.dispatch_counter)
